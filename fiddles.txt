@@ -1,2 +1,3 @@
 http://jsfiddle.net/AdFgD/ balls
 http://jsfiddle.net/AdFgD/6/ latööcarfian
+http://jsfiddle.net/gxU9p/ basic synth + sequencer (by coworker aspelund)
