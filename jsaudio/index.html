@@ -1,0 +1,177 @@
+<html>
+<head>
+	<title>Blahonga</title>
+	<script type="text/javascript">
+		var context = new (window.AudioContext || window.webkitAudioContext);
+
+		var notes = {};
+		var channels = [];
+		var noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+		var pattern1 = [
+			'A1',
+			'-',
+			'A2',
+			'A3',
+			'A1',
+			'-',
+			'A2',
+			'A3',
+
+			'F1',
+			'-',
+			'F2',
+			'F3',
+			'F1',
+			'-',
+			'F2',
+			'F3',
+
+			'G1',
+			'-',
+			'G2',
+			'G3',
+			'G1',
+			'-',
+			'G2',
+			'G3',
+
+			'E1',
+			'-',
+			'E2',
+			'E3',
+			'G1',
+			'-',
+			'G2',
+			'G3'
+		];		
+
+		var pattern2 = [
+			'A4',
+			'-',
+			'-',
+			'-',
+			'G4',
+			'-',
+			'-',
+			'-',
+
+			'C5',
+			'B4',
+			'A4',
+			'-',
+			'G4',
+			'-',
+			'E4',
+			'-',
+
+			'D4',
+			'-',
+			'X',
+			'-',
+			'-',
+			'-',
+			'-',
+			'-',
+
+			'-',
+			'-',
+			'-',
+			'-',
+			'-',
+			'-',
+			'-',
+			'-'
+		];
+
+		var getFrequency = function (n) {
+			// Base C5
+			return 523.25 * Math.pow(Math.pow(2, (1/12)), n);
+		};
+
+		var createChannels = function () {
+			channels.push(new Channel("sawtooth"));
+			channels.push(new Channel("triangle"));
+		};
+
+		var Channel = function (oscillatorType) {
+			var channel = {};
+
+			var oscillator = context.createOscillator()
+			oscillator.type = oscillatorType;
+
+			var amp = context.createGain();
+			amp.gain.value = 0;
+
+			oscillator.connect(amp);
+			amp.connect(context.destination);
+			oscillator.start(0);
+
+			channel.playNote = function (note) {	
+				if(note === '-') { 
+					return;
+				}
+
+				if(note === 'X') {
+					channel.stopNote();
+					return;
+				}
+
+				var now = context.currentTime;
+				
+				oscillator.frequency.setValueAtTime(notes[note], now);
+
+				amp.gain.cancelScheduledValues(now);
+				amp.gain.setValueAtTime(0, now);
+				amp.gain.linearRampToValueAtTime(0.8, context.currentTime + 0.05);
+			};
+
+			channel.stopNote = function () {
+				var now = context.currentTime;
+
+				amp.gain.cancelScheduledValues(now);
+				amp.gain.linearRampToValueAtTime(0.0, context.currentTime + 0.2);
+			}
+
+
+			return channel;
+		}
+
+		var createAllNotes = function () {
+			for (var octave = -4; octave < 4; octave++){
+				for (var note = 0; note < noteNames.length; note++) {
+					var noteName = noteNames[note] + (octave + 5).toString();
+					notes[noteName] = getFrequency(note + octave * 12);
+				}
+			}
+		}
+
+		createAllNotes();
+		createChannels();
+
+		var currentStep = 0;
+
+
+		var step = function () {
+			channels[0].playNote(pattern1[currentStep]);
+			channels[1].playNote(pattern2[currentStep]);
+			currentStep++;
+
+			if(currentStep >= pattern1.length){
+				currentStep = 0;
+				clearInterval(timer);
+				channels[0].stopNote();
+				channels[1].stopNote();
+			}
+		}
+
+		var timer = setInterval(step, 150);
+
+		console.log(notes);
+
+	</script>
+</head>
+	<body>
+		<h2>Blahonga!</h2>
+	</body>
+</html>
